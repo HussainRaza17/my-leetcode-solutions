@@ -30,7 +30,7 @@ jobs:
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
         run: |
           set -e
-          python scripts/sync_leetcode.py || echo "LeetCode fetch failed; will try again on next run."
+          python scripts/sync_leetcode.py
 
       - name: Commit & push if changed
         run: |
