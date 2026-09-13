@@ -1,0 +1,41 @@
+name: Sync LeetCode to Repo
+
+on:
+  workflow_dispatch:  # allow manual runs
+  schedule:
+    # Runs once every day at 00:00 UTC (which is 05:30 Asia/Kolkata)
+    - cron: "0 0 * * *"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # allow pushing commits
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install requests
+
+      - name: Run sync (pull recent AC submissions)
+        env:
+          LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+        run: |
+          set -e
+          python scripts/sync_leetcode.py || echo "LeetCode fetch failed; will try again on next run."
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name "leetcode-bot"
+          git config user.email "leetcode-bot@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "[auto] sync accepted submissions"
+          git push
